@@ -1,9 +1,17 @@
-import json # Made With love by @govtrashit A.K.A RzkyO
-import os # DON'T CHANGE AUTHOR NAME!
-from telegram import (
-    Update, InlineKeyboardButton, InlineKeyboardMarkup,
-    InputFile, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, CallbackQuery
+import json
+import os
+from datetime import datetime
+
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    ContextTypes,
+    filters
 )
+
 DATA_FILE = "products.json"
 def load_products():
     if os.path.exists(DATA_FILE):
@@ -570,34 +578,28 @@ async def handle_back_to_produk(update, context): # HANDLE BACK TO PRODUK
     await query.message.delete()
     await send_main_menu(context, query.from_user.id, query.from_user)
 
-
-async def handle_info_bot(update, context):  # HANDLE INFO BOT
+async def handle_info_bot(update, context):
     query = update.callback_query
+
     text = (
-        "📖 *INFORMASI BOT*\n"
-        "╽─────────────────────────────╮\n"
-        "├ 🧠 *Nama Bot*: `Store raxi`\n"
-        "├ 👨‍💻 *Author*: [@raxiyesir](https://t.me/raxiyesir)\n"
-        "├ 🛒 *Fungsi*: Penjualan akun digital otomatis\n"
-        "├ ⚙️ *Fitur*: Deposit, Pengiriman Akun, Statistik\n"
-        "├ 🧰 *Teknologi*: Python, Telegram Bot API\n"
-        "├ 🗓️ *Update*: kepo ngontol\n"
-        "╰─────────────────────────────╯\n\n"
-        "🌐 *Sosial Media Developer:*\n"
-        "• GitHub: [-])\n"
-        "• Instagram: [kepo](gatau ah pc aja)\n\n"
-        "💬 *Saran / kritik?* Hubungi [@raxiyesir)"
+        "╔══════════════════════╗\n"
+        "      📖 INFORMASI BOT\n"
+        "╚══════════════════════╝\n\n"
+        "🧠 Nama Bot : Store Raxi\n"
+        "👨‍💻 Author   : @raxiyesir\n"
+        "🛒 Fungsi   : Penjualan akun digital otomatis\n"
+        "⚙️ Fitur    : Auto Order, Deposit, Instant Delivery\n\n"
+        "╚══════════════════════╝"
     )
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔙 Kembali ke Menu", callback_data="back_to_produk")]
+        [InlineKeyboardButton("🔙 Kembali", callback_data="back_to_produk")]
     ])
 
     await query.edit_message_text(
         text,
-        parse_mode="Markdown",
-        disable_web_page_preview=True,
-        reply_markup=keyboard
+        reply_markup=keyboard,
+        parse_mode="Markdown"
     )
 
 async def handle_ignore(update, context): # HANDLE IGNORE
@@ -609,7 +611,6 @@ async def handle_ignore(update, context): # HANDLE IGNORE
 callback_handlers = {
     "list_produk": handle_list_produk,
     "cek_stok": handle_cek_stok,
-    "info_bot": handle_info_bot,
     "deposit": handle_deposit,
     "deposit_custom": handle_deposit_nominal,
     "cancel_deposit": handle_cancel_deposit,
@@ -644,33 +645,90 @@ async def handle_admin_restock(update, context):
         text="Kirim ID produk:"
     )
 
-
-
-async def button_callback(update: Update, context: CallbackContext):
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
 
-    if data in load_json(produk_file):
+    # 📖 INFO BOT
+    if data == "info_bot":
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Kembali", callback_data="back_to_menu")]
+        ])
+
+        await query.edit_message_text(
+            "╔══════════════════════╗\n"
+            "      📖 INFORMASI BOT\n"
+            "╚══════════════════════╝\n\n"
+            "🧠 Nama Bot : Store Raxi\n"
+            "👨‍💻 Author   : @raxiyesir\n"
+            "🛒 Fungsi   : Penjualan akun digital otomatis\n"
+            "⚙️ Fitur    : Auto Order, Deposit, Instant Delivery\n",
+            reply_markup=keyboard
+        )
+
+    # 🛒 PRODUK DETAIL
+    elif data in load_json(produk_file):
         await handle_produk_detail(update, context)
+
+    # 💰 DEPOSIT
     elif data.startswith("deposit_"):
         await handle_deposit_nominal(update, context)
+
+    # 🛠 ADMIN CONFIRM
     elif data.startswith("confirm:"):
         await handle_admin_confirm(update, context)
+
+    # 🛠 ADMIN FINAL
     elif data.startswith("final:"):
         await handle_admin_final(update, context)
+
+    # 🛠 ADMIN REJECT
     elif data.startswith("reject:"):
         await handle_admin_reject(update, context)
+
+    # 🔧 CALLBACK LAINNYA
     elif data in callback_handlers:
         await callback_handlers[data](update, context)
+
+    # ❌ DEFAULT
     else:
-        await query.edit_message_text("❌ Aksi tidak dikenali.")
+        await query.edit_message_text("❌ Aksi tidak dikenali,start ulang /start.")
 
-async def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    await send_main_menu(context, update.effective_chat.id, user)
+    uid = user.id
 
-async def handle_text(update: Update, context: CallbackContext):
+    saldo = load_json(saldo_file)
+    transaksi = load_json(transaksi_file) if "transaksi_file" in globals() else {}
+
+    total_transaksi = transaksi.get(str(uid), {}).get("total", 0)
+    total_nominal = transaksi.get(str(uid), {}).get("nominal", 0)
+
+    text = (
+        "👋 Selamat datang di Raxi Store!\n\n"
+        f"🧑 Nama: {user.first_name}\n"
+        f"🆔 ID: {uid}\n"
+        f"💰 Total Saldo Kamu: Rp{saldo.get(str(uid), 0):,}\n"
+        f"📦 Total Transaksi: {total_transaksi}\n"
+        f"💸 Total Nominal Transaksi: Rp{total_nominal:,}\n"
+    )
+
+    keyboard = [
+        [InlineKeyboardButton("🛒 List Produk", callback_data="list_produk")],
+        [InlineKeyboardButton("💰 Deposit", callback_data="deposit")],
+        [InlineKeyboardButton("ℹ️ Info Bot", callback_data="info_bot")]
+    ]
+
+    # 🔥 tombol admin kalau ID cocok
+    if uid == OWNER_ID:
+        keyboard.append([InlineKeyboardButton("⚙️ Admin Panel", callback_data="admin_panel")])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(text, reply_markup=reply_markup)
+
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     uid_int = update.effective_user.id
     uid = str(uid_int)
