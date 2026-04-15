@@ -72,5 +72,11 @@
         "tipe": "1 Bulan Student"
       }
     ]
+  },
+  "py": {
+    "nama": "raxi",
+    "harga": 5000,
+    "stok": 0,
+    "akun_list": []
   }
 }
