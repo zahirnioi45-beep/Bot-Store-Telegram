@@ -1,0 +1,5 @@
+Akun #1
+Username: user1
+Password: pass1
+Tipe: netflix
+---------------------------

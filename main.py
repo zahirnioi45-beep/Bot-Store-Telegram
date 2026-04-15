@@ -72,7 +72,7 @@ async def send_main_menu(context, chat_id, user):
     total = statistik.get(str(user.id), {}).get("nominal", 0)
 
     text = (
-        f"👋 Selamat datang di *Store Ekha*!\n\n"
+        f"👋 Selamat datang di *Raxi Store*!\n\n"
         f"🧑 Nama: {user.full_name}\n"
         f"🆔 ID: {user.id}\n"
         f"💰 Total Saldo Kamu: Rp{s:,}\n"
@@ -285,9 +285,9 @@ async def handle_deposit_nominal(update, context): # HANDLE DEPOSIT NOMINAL
         await context.bot.send_message(
             chat_id=query.from_user.id,
             text=f"💳 Transfer *Rp{nominal + 23:,}* ke:\n"
-                 "`DANA 0812-1259-4112 A.N And**`\n"
-                 "`SEABANK 901655655990 A.N Rizky Oryza`\n"
-                 "`BANK JAGO 107616413403 A.N Rizky Oryza`\nSetelah transfer, kirim bukti ke bot ini.",
+                 "`DANA 088902891757 A.N moh*** za*** ath****`\n"
+                 "`SEABANK - A.N -`\n"
+                 "`BANK JAGO - A.N -`\nSetelah transfer, kirim bukti ke bot ini.",
             parse_mode="Markdown",
             reply_markup=reply_keyboard
         )
@@ -301,27 +301,43 @@ async def handle_cancel_deposit(update, context):
     await query.edit_message_text("✅ Deposit kamu telah dibatalkan.")
     await send_main_menu(context, query.from_user.id, query.from_user)
 
-async def handle_admin_panel(update, context): # HANDLE ADMIN PANEL
+async def handle_admin_panel(update, context):  # HANDLE ADMIN PANEL
     query = update.callback_query
+    await query.answer()
+
     saldo = load_json(saldo_file)
     pending = load_json(deposit_file)
+
     text = "*📊 Data User:*\n"
+
+    ada_saldo = False
     for u, s in saldo.items():
-        text += f"• ID {u}: Rp{s:,}\n"
+        if s > 0:
+            text += f"• ID {u}: Rp{s:,}\n"
+            ada_saldo = True
+
+    if not ada_saldo:
+        text += "Tidak ada saldo.\n"
+
     text += "\n*⏳ Pending Deposit:*\n"
     if pending:
         for p in pending:
             text += f"- @{p['username']} ({p['user_id']}) Rp{p['nominal']:,}\n"
     else:
         text += "Tidak ada."
-    keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton("➕️ Tambah Produk", callback_data="admin_add")],
-    [InlineKeyboardButton("📦 Restock Produk", callback_data="admin_restock")],
-    [InlineKeyboardButton("✏️ Rename Produk", callback_data="admin_rename")]
-    [InlineKeyboardButton("🗑 Hapus Produk", callback_data="admin_delete")]
-])
 
-    await query.edit_message_text(text, parse_mode="Markdown", reply_markup=keyboard)
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("➕️ Tambah Produk", callback_data="admin_add")],
+        [InlineKeyboardButton("📦 Restock Produk", callback_data="admin_restock")],
+        [InlineKeyboardButton("✏️ Rename Produk", callback_data="admin_rename")],
+        [InlineKeyboardButton("🗑 Hapus Produk", callback_data="admin_delete")]
+    ])
+
+    await query.edit_message_text(
+        text,
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
 
 async def handle_admin_confirm(update, context): # HANDLE ADMIN CONFIRM
     query = update.callback_query
@@ -560,17 +576,17 @@ async def handle_info_bot(update, context):  # HANDLE INFO BOT
     text = (
         "📖 *INFORMASI BOT*\n"
         "╽─────────────────────────────╮\n"
-        "├ 🧠 *Nama Bot*: `Store Ekha`\n"
-        "├ 👨‍💻 *Author*: [@govtrashit](https://t.me/govtrashit)\n"
+        "├ 🧠 *Nama Bot*: `Store raxi`\n"
+        "├ 👨‍💻 *Author*: [@raxiyesir](https://t.me/raxiyesir)\n"
         "├ 🛒 *Fungsi*: Penjualan akun digital otomatis\n"
         "├ ⚙️ *Fitur*: Deposit, Pengiriman Akun, Statistik\n"
         "├ 🧰 *Teknologi*: Python, Telegram Bot API\n"
-        "├ 🗓️ *Update*: 18 Juni 2025\n"
+        "├ 🗓️ *Update*: kepo ngontol\n"
         "╰─────────────────────────────╯\n\n"
         "🌐 *Sosial Media Developer:*\n"
-        "• GitHub: [@rzzky](https://github.com/rzzky)\n"
-        "• Instagram: [@rizzkyo](https://instagram.com/rizzkyo)\n\n"
-        "💬 *Saran / kritik?* Hubungi [@govtrashit](https://t.me/govtrashit)"
+        "• GitHub: [-])\n"
+        "• Instagram: [kepo](gatau ah pc aja)\n\n"
+        "💬 *Saran / kritik?* Hubungi [@raxiyesir)"
     )
 
     keyboard = InlineKeyboardMarkup([
@@ -585,8 +601,10 @@ async def handle_info_bot(update, context):  # HANDLE INFO BOT
     )
 
 async def handle_ignore(update, context): # HANDLE IGNORE
+
     query = update.callback_query
     await query.answer()
+    await query.edit_message_text
 
 callback_handlers = {
     "list_produk": handle_list_produk,
@@ -797,7 +815,7 @@ async def handle_text(update: Update, context: CallbackContext):
 
             await update.message.reply_text(
                 f"💳 Transfer *Rp{nominal + 23:,}* ke:\n"
-                "`DANA 0812-XXXX-XXXX a.n. Store Ekha`\n"
+                "`DANA 088902891757 a.n. moh**** za**** ath*****`\n"
                 "Setelah transfer, kirim bukti foto ke bot ini.",
                 parse_mode="Markdown",
                 reply_markup=reply_keyboard
@@ -888,7 +906,7 @@ async def handle_photo(update: Update, context: CallbackContext):
         )
     await update.message.reply_text("✅ Bukti dikirim! Tunggu konfirmasi admin.")
 
-def main(): # Made With love by @govtrashit A.K.A RzkyO
+def main(): 
     app = Application.builder().token("8505410323:AAFPLFtHHj06Z-xAHyxQTSDGELYyuoAXY0w").build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_callback))
